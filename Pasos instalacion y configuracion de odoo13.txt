@@ -1,0 +1,107 @@
+#Pasos para instalar y configurar odoo13 con base de datos postgresql 12 en CentOS 7.7.1908
+#Paso 1 - Actualizar el sistema
+yum update 
+
+#Paso 2 - Instalar y activar los respositorios de EPEL
+yum install  epel-release
+
+#Paso 3 - Activar los repositorios de la coleccion de software
+yum install centos-release-scl
+
+#Paso 4 - Instalar python para distribuciones red-hat 
+yum install rh-python36
+
+#Paso 5 - Instalar herramientas y dependencias..
+yum install git gcc wget nodejs-less libxslt-devel bzip2-devel openldap-devel libjpeg-devel freetype-devel
+
+#Paso 6 - Crear un usuario en el sistema para el servicio de odoo. Este mismo nombre de usuario se va usar para el gestor de base de datos en el Paso 9.
+useradd -m -U -r -d /opt/odoo -s /bin/bash odoo  
+
+#Paso 7 - Instalar el gestor de base de datos Postgresql. Revisamos las versiones disponibles
+yum list postgres*
+
+#Paso 7.1 - Si no esta la version 12 disponible, descargamos e instalamos los repositorios de postgresql
+yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+#Paso 7.2 - Revisamos el RPM
+rpm -qi pgdg-redhat-repo  
+
+#Paso 7.3 - Instalar postgresql-12
+yum install postgresql12 postgresql12-server postgresql12-contrib postgresql12-libs
+
+#Paso 8 - Iniciar el gestor de base de datos
+/usr/pgsql-12/bin/postgresql-12-setup initdb
+
+#Paso 8.1 - Activar el servicio de postgresql-12
+systemctl enable postgresql-12
+
+#Paso 8.2 - Revisar el status e iniciar el servicio de postgresql-12
+systemctl status postgresql-12
+systemctl start postgresql-12
+
+#Paso 9 - Crear un usuario en el gestor de base de datos postgresql-12 para que gestione las bases de datos de Odoo. El nombre de usuario es el mismo que se uso en el Paso 6.
+su - postgres -c "createuser -s odoo"
+
+#Paso 10 - Instalar el complemento Wkhtmltopdf para comvertir HTML en PDF. Descargar el RPM en algun directorio.
+wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+
+#Paso 10.1 - Instalar el RPM wkhtmltox-0.12.5-1.centos7.x86_64 descargado 
+yum localinstall wkhtmltox-0.12.5-1.centos7.x86_64.rpm
+
+#Paso 11  - Login al usuario odoo, descargar e instalar Odoo13. Login como usuario odoo
+su - odoo
+
+#Paso 11.1 - Clonar el repositorio de Odoo13 desde github, tomando unicamente lo ultimos cambios. Guardando el repo clonado en /opt/odoo/odoo13
+git clone https://www.github.com/odoo/odoo --depth 1 --branch 13.0 /opt/odoo/odoo13
+
+#Paso 11.2 - Activar la coleccion de software para acceder a los binarios de python.
+scl enable rh-python36 bash
+
+#Paso 11.3 - Ingresar a la carpta /opt/odoo
+cd /opt/odoo
+
+#Paso 11.4 - Se activa un entorno virtual de python para la instalacion de los requerimientos de odoo. Esto genera una nueva carpeta en /opt/odoo/odoo13-venv. El nombre de la carpeta puede ser personalizado. 
+python3 -m venv odoo13-venv
+
+#Paso 11.5 - Activar el entorno virtual haciendo referencia a la nueva carpeta creada.
+source odoo13-venv/bin/activate
+
+#Paso 11.6 - Se actualiza el sistema de gestion de paquetes de python.
+pip install --upgrade pip
+
+#Paso 11.7 - Instalar el paquete wheel
+pip3 install wheel
+
+#Paso 11.8 - Instalar los requemientor de odoo en el entorno virtual.
+pip3 install -r odoo13/requirements.txt
+
+#Paso 11.9 - Desactivar el entorno virtual
+deactivate
+
+#Paso 11.10 - Crear una carpeta para los addons customisados o terceros de odoo.
+mkdir /opt/odoo/odoo13-custom-addons
+
+#Paso 11.11 - Salir del usuario odoo 
+exit
+
+#Paso 12 - Crear el archivo de configuracion de odoo en el directorio /etc/    El nombre del archivo de configuracion es personalizado. ejemplo.
+/etc/odoo13.conf
+
+#Paso 13 - Crear el directorio de logs y asignar permisos a odoo
+mkdir /var/log/odoo13
+chown odoo13: /var/log/odoo13
+
+#Paso 14- Crear el archivo del sistema de odoo en el directorio /etc/systemd/system/ El nombre del archivo es personalizado. ejemplo.
+/etc/systemd/system/odoo13.service  
+
+#Paso 15- Activar el servidio de odoo.
+systemctl enable odoo13
+
+#Paso 16 - Revisar el estado e iniciar odoo13
+systemctl status odoo13
+systemctl start odoo13
+
+#Paso 17- Activar puerto  8069 en el firewall
+firewall-cmd --permanent --zone=public --add-port=8069/tcp
+firewall-cmd --reload
+
