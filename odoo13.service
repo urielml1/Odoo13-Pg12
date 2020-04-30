@@ -1,0 +1,16 @@
+[Unit]
+Description=Odoo13
+Requires=postgresql-12.service
+After=network.target postgresql-12.service
+
+[Service]
+Type=simple
+SyslogIdentifier=odoo13
+PermissionsStartOnly=true
+User=odoo
+Group=odoo
+ExecStart=/usr/bin/scl enable rh-python36 -- /opt/odoo/odoo13-venv/bin/python3 /opt/odoo/odoo13/odoo-bin -c /etc/odoo13.conf
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
