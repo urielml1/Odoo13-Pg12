@@ -1,0 +1,76 @@
+#Pasos para generar y configurar un certificado de seguridad validado por let´s encrypt. Instalación y configuración de nginx como proxy inverso con certificado SSL para el servicio de odoo13.
+
+#Paso 1 - Instalar nginx
+ yum install nginx
+
+#Paso 2 - Activar e iniciar el servicio de nginx.
+systemctl enable nginx 
+systemctl start nginx 
+
+#Paso 3 - Abrir el puerto 80 tcp para comprobar nginx en el navegador
+firewall-cmd --permanent --zone=public --add-port=80/tcp
+firewall-cmd --reload
+
+#Paso 4 - Instalar certbot 
+yum install certbot
+
+#Paso 5 - Generar una llave de intercambio segura con openssl que se va ha guardar en el directorio  /etc/ssl/certs/
+openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+
+#Paso 6 - Configuracion de noip.com con cuenta gratuita. Crear hostname, asignar subdominio, elegir dominio y agregar ip public del servidor.
+
+#Paso 7 - Crear un directorio y asignar los permiso al servidor nginx, esto es para poder obtener un certificado SSL. Genera un un archivo temporal que permite validar el dominio.
+
+mkdir -p /var/lib/letsencrypt/.well-known
+chgrp nginx /var/lib/letsencrypt
+chmod g+s /var/lib/letsencrypt
+
+#Paso 8 -  Crear una carpeta que va ha contener dos archivos reutilizables que se vicularan ha otros archivos de configuracion.     
+
+mkdir /etc/nginx/snippets 
+
+#Paso 8.1 - Crear el primer archivo de configuracion que hace referencia a la carpeta que se creo en el Paso 6. El archivo se genera en el direcotrio /etc/nginx/snippets/
+
+nano /etc/nginx/snippets/letsencrypt.conf
+
+#Paso 8.2 - Crear el segundo archivo de configuración que contiene parametros SSL para generar el certificado de seguridad. El archivo se crea en el direcotrio /etc/nginx/snippets/
+
+nano /etc/nginx/snippets/ssl.conf
+
+#Paso 9 - Crear los bloques de dominio en el directorio /etc/nginx/conf.d/
+
+nano /etc/nginx/conf.d/ejemplo.com.conf
+
+#Paso 9.1 - Revisar que la configuración de nginx. Reiniciar el servicio de nginx.
+
+nginx -t
+systemctl restart nginx
+
+#Paso 10 - Pruebas para generar el certificado de seguridad.
+
+certbot certonly --agree-tos --email mi_correo@ejemplo.com --webroot -w /var/lib/letsencrypt/ -d ejemplo.com --dry-run
+
+#Paso 11 - Generar el certificado de seguridad
+
+certbot certonly --agree-tos --email mi_correo@ejemplo.com --webroot -w /var/lib/letsencrypt/ -d ejemplo.com
+
+#Paso 12 - Agregar la configuracion del certificado de seguridad al archivo de bloque de dominio en el directorio /etc/nginx/conf.d/ejemplo.com.conf y reiniciar el servicio de nginx 
+
+nano /etc/nginx/conf.d/ejemplo.com.conf
+nginx -t
+systemctl restart nginx
+
+#Paso 13 - Abrir el puerto 443 en el firewall
+
+firewall-cmd --permanent --zone=public --add-port=443/tcp
+firewall-cmd --reload
+
+#Paso 14 - Habilitar proxy inverso para odoo 13. Agregar la configuracion del certificado de seguridad al archivo de bloque de dominio en el directorio /etc/nginx/conf.d/ejemplo.com.conf y reiniciar el servicio de nginx
+
+nano /etc/nginx/conf.d/ejemplo.com.conf
+nginx -t
+systemctl restart nginx
+
+#Paso 15 - Al recibir el error 502 Bad Gateway
+
+setsebool -P httpd_can_network_connect 1
