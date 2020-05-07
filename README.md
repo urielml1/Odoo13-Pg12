@@ -12,4 +12,4 @@ Pasos para generar un certificado SSL con let's encrypt y agregarlo a la configu
 Este repositorio contiene la lista de comandos y archivos de configuracion que se generan durante el video que comparto debajo.
 
 Odoo 13 con Certificado SSL Let’s encrypt y Nginx reverse proxy
-Link del video: 
+Link del video: https://youtu.be/QedSBidi2u4
