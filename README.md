@@ -14,5 +14,5 @@ Odoo 13 con Certificado SSL Let’s encrypt y Nginx reverse proxy - [Video](http
 
 # Script para automatizar la renovación del certificado SSL
 
-Auto renovación de certificados SSL en 5 minutos con script en CentOS 7 - [Video]()
+Auto renovación de certificados SSL en 5 minutos con script en CentOS 7 - [Video](https://youtu.be/w4v6yygZOvo)
 
